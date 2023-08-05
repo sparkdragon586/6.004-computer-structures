@@ -20,6 +20,11 @@ module register_file (
   integer i;
   // Every positive edge assign WritePort to WriteAddress if WriteEnable is
   // true
+  initial begin
+    for (i = 0; i < 32; i = i + 1) begin
+      registers[i] <= 0;
+    end
+  end
   always @(posedge clk) begin
     if (!rst) begin
       if (WriteEnable & (WriteAddress !== 31)) begin

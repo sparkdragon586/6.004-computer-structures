@@ -1,25 +1,29 @@
 `default_nettype none
 
-/*
- *  Blink a LED on the OrangeCrab using verilog
- */
 
 module top (
-    input clk_i,
-    output [2:0] led_o
+    input clk,
+    output [31:0] InstructionAddress,
+    input [31:0] InstructionData,
+    output [31:0] DataAddress,
+    output [31:0] WriteData,
+    input [31:0] ReadData,
+    output oe,
+    output we,
+    input irq,
+    input rst
 );
-  // Create a 27 bit register
-  reg [26:0] counter = 0;
-
-  // Every positive edge increment register by 1
-  always @(posedge clk_i) begin
-    counter <= counter + 1;
-  end
-
-  // Output inverted values of counter onto LEDs
-  assign led_o[0] = ~counter[24];
-  assign led_o[1] = ~counter[25];
-  assign led_o[2] = 1;
-
+  Beta test (
+      .clk(clk),
+      .InstructionAddress(InstructionAddress),
+      .InstructionData(InstructionData),
+      .DataAddress(DataAddress),
+      .DataRead(ReadData),
+      .DataWrite(WriteData),
+      .WriteEnable(we),
+      .ReadEnable(oe),
+      .irq(irq),
+      .rst(rst)
+  );
 
 endmodule

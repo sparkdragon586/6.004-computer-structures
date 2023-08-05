@@ -7,57 +7,41 @@
 
 module sim (
     input clk,
-    output [2:0] led_o,
-    output [31:0] ReadPort1,
-    output [31:0] ReadPort2
+    output [31:0] InstructionAddress,
+    output [31:0] InstructionData,
+    output [31:0] DataAddress,
+    output [31:0] DataRead,
+    output [31:0] DataWrite,
+    output WriteEnable
 );
-  /*
-  top sim_top (
-      clk,
-      led_o
-  );
-  */
-  reg [13:0] main_counter = 1;
-  reg [1:0] tmp = 0;
-  reg [4:0] WriteAddress = 0;
-  reg [31:0] WritePort = 0;
-  reg [4:0] PrevWriteAddress = 0;
+  reg [31:0] mainmem[65536];
+  wire [31:0] InstructionAddress;
+  wire [31:0] InstructionData;
+  wire [31:0] DataAddress;
+  wire [31:0] DataRead;
+  wire [31:0] DataWrite;
   wire WriteEnable;
-  wire [4:0] ReadAddress1;
-  wire [4:0] ReadAddress2;
-  wire rst;
-  register_file test_register_file (
-      clk,
-      WriteAddress,
-      WritePort,
-      WriteEnable,
-      ReadAddress1,
-      ReadAddress2,
-      rst,
-      ReadPort1,
-      ReadPort2
+  wire ReadEnable;
+  wire irq = 0;
+  wire rst = 0;
+  Beta test_beta (
+      .clk(clk),
+      .InstructionAddress(InstructionAddress),
+      .InstructionData(InstructionData),
+      .DataAddress(DataAddress),
+      .DataRead(DataRead),
+      .DataWrite(DataWrite),
+      .WriteEnable(WriteEnable),
+      .ReadEnable(ReadEnable),
+      .irq(irq),
+      .rst(rst)
   );
-  always @(posedge clk) begin
-    main_counter <= main_counter + 1;
-    if (main_counter == 0) begin
-      tmp <= 1;
-      rst <= 1;
-    end else rst <= 0;
-    PrevWriteAddress <= WriteAddress;
-    if (tmp == 0) begin
-      WriteAddress <= WriteAddress + 1;
-    end
-    if (WriteAddress == 31) begin
-      tmp <= 1;
-      WritePort <= WritePort + 1;
-    end
-    if (tmp !== 0) begin
-      tmp <= tmp + 1;
-    end
+  initial begin
+    $readmemh("instructions.hex", mainmem);
   end
-
-  assign WriteEnable  = (tmp == 0) ? 1 : 0;
-  assign ReadAddress1 = PrevWriteAddress;
-  assign ReadAddress2 = WriteAddress;
-
+  assign InstructionData = mainmem[(InstructionAddress>>2)];
+  assign DataRead = ReadEnable ? mainmem[(DataAddress>>2)] : 0;
+  always @(posedge clk) begin
+    if (WriteEnable) mainmem[(DataAddress>>2)] <= DataWrite;
+  end
 endmodule

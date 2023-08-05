@@ -3,6 +3,11 @@ LOCATE    COMP "clk_i" SITE "A9";
 IOBUF     PORT "clk_i" IO_TYPE=LVCMOS33;
 FREQUENCY PORT "clk_i" 48.0 MHz;
 
+LOCATE    COMP "clk" SITE "A9";
+IOBUF     PORT "clk" IO_TYPE=LVCMOS33;
+FREQUENCY PORT "clk" 48.0 MHz;
+
+
 ## Reset button
 LOCATE COMP "reset_o"   SITE "V17";
 IOBUF  PORT "reset_o"   IO_TYPE=LVCMOS33;
