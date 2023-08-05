@@ -1,0 +1,36 @@
+.include beta.uasm
+
+       BR(STEP1)   | start execution with Step 1
+       BR(ILLOP_HANDLER)
+
+ILLOP_HANDLER: HALT()
+
+| the array to be sorted
+A:     LONG(10) LONG(56) LONG(27) LONG(69) LONG(73) LONG(99)
+       LONG(44) LONG(36) LONG(10) LONG(72) LONG(71) LONG(1)
+
+ALEN = (. - A)/4    | determine number of elements in A
+
+| Please enter your code for each of the steps below...
+
+STEP1:  
+        CMOVE(0, r1)
+STEP2:
+       CMOVE(0, r2)
+STEP3:
+       ADDC(r2, 1, r2)
+       CMPLTC(r2, ALEN, r3)
+       BEQ(r3, STEP5, r31)
+STEP4:
+       SHLC(r2, 2, r4)
+       LD(r4, A-4, r5)
+       LD(r4, A, r6)
+       CMPLE(r5, r6, r3)
+       BNE(r3, STEP3, r31)
+       ST(r6, A-4, r4)
+       ST(r5, A, r4)
+       CMOVE(1, r1)
+       BR(STEP3)
+STEP5:
+       BNE(r1, STEP1)
+       HALT()
