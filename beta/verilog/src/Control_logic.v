@@ -13,50 +13,33 @@
 `define SHL 4'b1100
 `define SHR 4'b1101
 `define SRA 4'b1110
-`define ILLEGALINSTRUCTION 16'b001x01100xx1xxxx
+`define ILLEGALINSTRUCTION 11'b0011001xxxx
 `define TRUE 1'b1
 `define FALSE 1'b0
 
 module Control_logic (
     input [5:0] opcode,
-    input irq,
     input z,
-    output [3:0] alufn,
-    output werf,
-    output bsel,
-    output asel,
-    output moe,
-    output mwr,
-    output [2:0] pcsel,
-    output ra2sel,
-    output wasel,
-    output [1:0] wdsel
+    output [10:0] intermediateControl
 );
-  wire [15:0] intermediateControl;
-  assign {wdsel[1:0], wasel, ra2sel, pcsel[2:0], mwr, moe, asel, bsel, werf, alufn[3:0]} = intermediateControl;
+  wire [10:0] intermediateControl;
+  assign {wdsel[1:0], pcsel[1:0], mwr, moe, werf, alufn[3:0]} = intermediateControl;
   always_comb begin
-    if (irq) begin
-      intermediateControl = 32'b001x10000xxxxxxxxxxxxxxxxxxxxxxx;
-    end else begin
+    begin
       if (opcode[5]) begin
         if (!(opcode[3:0] == 4'b0011 | opcode[2:0] == 3'b111)) begin
-          intermediateControl = {10'b0100000000, opcode[4], `TRUE, opcode[3:0]};
+          intermediateControl = {7'b0100000, opcode[4], `TRUE, opcode[3:0]};
         end else intermediateControl = `ILLEGALINSTRUCTION;
       end else begin
         case (opcode[2:0])
-          3'b000:
-          intermediateControl = {2'b10, 1'b0, 1'bx, 3'b000, 1'b0, 1'b1, 1'b0, 1'b1, 1'b1, `ADD};
-          3'b001:
-          intermediateControl = {2'bxx, 1'bx, 1'b1, 3'b000, 1'b1, 1'b0, 1'b0, 1'b1, 1'b0, `ADD};
-          3'b011: intermediateControl = {2'b00, 1'b0, 1'bx, 3'b010, 1'b0, 8'b0xx1xxxx};
-          3'b100:
-          intermediateControl = {2'b00, 1'b0, 1'bx, (z ? 3'b000 : 3'b001), 1'b0, 1'b0, 7'bxx1xxxx};
+          3'b000: intermediateControl = {2'b10, 2'b00, 1'b0, 1'b1, 1'b1, `ADD};
+          3'b001: intermediateControl = {2'bxx, 2'b00, 1'b1, 1'b0, 1'b0, `ADD};
+          3'b011: intermediateControl = {2'b00, 2'b10, 1'b0, 6'b0xxxxx};
+          3'b100: intermediateControl = {2'b00, (z ? 2'b00 : 2'b01), 1'b0, 1'b0, 5'b1xxxx};
           3'b110:  /*<-not in isa*/
-          intermediateControl = {2'b00, 1'b0, 1'bx, (z ? 3'b000 : 3'b001), 1'b0, 1'b0, 7'bxx1xxxx};
-          3'b101:
-          intermediateControl = {2'b00, 1'b0, 1'bx, (z ? 3'b001 : 3'b000), 1'b0, 1'b0, 7'bxx1xxxx};
-          3'b111:
-          intermediateControl = {2'b10, 1'b0, 1'bx, 3'b000, 1'b0, 1'b1, 1'b1, 1'bx, 1'b1, `AND};
+          intermediateControl = {2'b00, (z ? 2'b00 : 2'b01), 1'b0, 1'b0, 5'b1xxxx};
+          3'b101: intermediateControl = {2'b00, (z ? 2'b01 : 2'b00), 1'b0, 1'b0, 5'b1xxxx};
+          3'b111: intermediateControl = {2'b10, 2'b00, 1'b0, 1'b1, 1'b1, `AND};
           default: intermediateControl = `ILLEGALINSTRUCTION;
         endcase
       end
