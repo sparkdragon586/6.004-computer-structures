@@ -12,6 +12,7 @@ module Beta_IF (
     input stall,
     input [31:0] cRelativeA,
     input [31:0] jt,
+    input [31:0] memWaitAddr,
     input [2:0] PCSEL,
     output [31:0] pcOut,
     output [31:0] iAddress,
@@ -38,6 +39,7 @@ module Beta_IF (
         2: pc <= jt;
         3: pc <= `ILLOP;
         4: pc <= `XADR;
+        5: pc <= memWaitAddr;
       endcase
     end
   end

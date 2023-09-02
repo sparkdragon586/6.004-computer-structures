@@ -31,6 +31,8 @@ module Beta_RF (
   wire ra2sel;
   wire asel;
   wire bsel;
+  wire ra1Disable;
+  wire ra2Disable;
 
   assign sxtConstant = $signed(InstructionData[15:0]);
   assign cRelativeA = pc + (sxtConstant << 2);
@@ -38,8 +40,11 @@ module Beta_RF (
   assign asel = (ir[31:26] == 6'b011111);
   assign bsel = !(ir[31:30] == 2'b10);
 
-  assign ra1 = ir[20:16];
-  assign ra2 = ra2sel ? ir[25:21] : ir[15:11];
+  assign ra1Disable = asel;
+  assign ra2Disable = bsel && !(ra2sel);
+
+  assign ra1 = ra1Disable ? 5'b11111 : ir[20:16];
+  assign ra2 = ra2Disable ? 5'b11111 : (ra2sel ? ir[25:21] : ir[15:11]);
 
   assign a = asel ? cRelativeA : rd1;
   assign b = bsel ? sxtConstant : rd2;
