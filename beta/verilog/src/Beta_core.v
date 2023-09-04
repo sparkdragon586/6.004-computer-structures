@@ -8,9 +8,11 @@ module Beta_core (
     output [31:0] InstructionAddress,
     input [31:0] InstructionData,
     input instructionReady,
+    input iMemfault,
     output [31:0] DataAddress,
     input [31:0] DataRead,
     input dataReady,
+    input dMemfault,
     output [31:0] DataWrite,
     output WriteEnable,
     output ReadEnable,
@@ -20,8 +22,10 @@ module Beta_core (
   //start
   reg [31:0] memWaitAddr;
   reg [6:0] accessPipeline[3];
+  wire interruptEnable;
   wire [2:0] bypassControl[2];
   wire [1:0] irsrc[4];
+  wire irsrcCtrl[4];
   wire [31:0] pcPipe[5];
   wire [31:0] irPipe[5];
   wire [31:0] rd1Bypass;
@@ -33,6 +37,10 @@ module Beta_core (
   wire [31:0] a;
   wire [31:0] b;
   wire [31:0] yPipe[2];
+  wire [2:0] PCSEL;
+  wire [2:0] pcselRF;
+  wire ALUException = 0;
+  wire mwr;
 
   always @(posedge clk) begin
     case (irsrc[1])
@@ -50,6 +58,38 @@ module Beta_core (
       1: accessPipeline[2] <= 6'b101110;
       2: accessPipeline[2] <= 6'b111111;
     endcase
+  end
+
+  always_comb begin
+
+    if (pcselRF != 0) begin
+      irsrcCtrl[0] = 1;
+      irsrc[1] = irsrcCtrl[1] ? 1 : ((pcselRF == 3 || pcselRF == 4) ? 2 : 0);
+      if (dataReady) PCSEL = pcselRF;
+    end else begin
+      irsrcCtrl[0] = irsrcCtrl[1];
+      irsrc[1] = (irsrcCtrl[1] || stall) ? 1 : 0;
+    end
+    if (ALUException) begin
+      irsrcCtrl[1] = 1;
+      irsrc[2] = irsrcCtrl[2] ? 1 : 2;
+    end else begin
+      irsrcCtrl[1] = irsrcCtrl[2];
+      irsrc[2] = irsrcCtrl[2] ? 1 : 0;
+    end
+    if (dataReady) begin
+      if (dMemfault) begin
+        irsrcCtrl[2] = 1;
+        irsrc[3] = irsrcCtrl[3] ? 1 : 2;
+      end else begin
+        irsrcCtrl[2] = irsrcCtrl[3];
+        irsrc[3] = irsrcCtrl[3] ? 1 : 0;
+      end
+    end else begin
+      WriteEnable = 0;
+      irsrcCtrl[3] = 1;
+      PCSEL = 5;
+    end
   end
 
   Beta_bypass bypass1 (
@@ -119,7 +159,7 @@ module Beta_core (
       .b(b),
       .d(dPipe[0]),
       .jt(jt),
-      .pcsel(pcsel),
+      .pcsel(pcselRF),
       .bypassAddr(bypassAddr)
   );
   Beta_ALU_stage ALU (
@@ -144,8 +184,7 @@ module Beta_core (
       .din(dPipe[1]),
       .wd(DataWrite),
       .addr(DataAddress),
-      .mwr(),
-      .moe(),
+      .mwr(ReadEnable),
       .pcout(pcPipe[3]),
       .irout(irPipe[3]),
       .yout(yPipe[1])
@@ -157,7 +196,7 @@ module Beta_core (
       .irin(irPipe[3]),
       .yin(yPipe[1]),
       .rd(DataRead),
-      .memwait(),
+      .memwait(dataReady),
       .wa(WriteAddress),
       .wd(WritePort),
       .WERF(WriteEnable)
