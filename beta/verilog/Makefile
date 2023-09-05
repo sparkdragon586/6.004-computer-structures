@@ -61,7 +61,6 @@ dfu: $(PROJ).dfu
 # Run the yosys script to synthasize the logic and netlist (in json format)
 # to provide for nextpnr-ecp5.
 %.json: %.ys
-	yosys
 	yosys -s "$<"
 
 # Run nextpnr-ecp5 to place the logic components and route the nets to pins.

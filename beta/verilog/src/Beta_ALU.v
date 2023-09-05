@@ -25,9 +25,30 @@ module Beta_ALU (
   wire cmpeq;
   wire cmplt;
 
-  // Every positive edge increment register by 1
   assign cmpeq = InA == InB;
   assign cmplt = InA < InB;
+
+  // Every positive edge increment register by 1
+
+  always_comb begin
+    case (AluFn)
+      default: Result = InA + InB;
+      4'b0001: Result = InA - InB;
+      4'b0010: Result = InA * InB;
+      4'b0100: Result = cmpeq;
+      4'b0101: Result = cmplt;
+      4'b0110: Result = cmpeq || cmplt;
+      4'b1000: Result = InA & InB;
+      4'b1001: Result = InA || InB;
+      4'b1010: Result = InA ^ InB;
+      4'b1011: Result = !(InA ^ InB);
+      4'b1100: Result = InA << InB;
+      4'b1101: Result = InA >> InB;
+      4'b1110: Result = InA >>> InB;
+    endcase
+  end
+
+  /*
   always_comb begin
     if (AluFn[2:0] == 1) begin
       Aintermediate = ~InA;
@@ -66,7 +87,7 @@ module Beta_ALU (
       end
     end
     Result = (AluFn[`FINAL] && !AluFn[`ADVANCED] && !(AluFn == 4'b0010)) ? ~intermediate : intermediate;
-  end
+  end */
 
 
 
