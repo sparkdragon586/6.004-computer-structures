@@ -82,7 +82,7 @@ module Beta_RF (
 
   always_comb begin
     if (opcode[5]) begin
-      if (!(opcode[3:0] == 4'b0011 || opcode[2:0] == 3'b111)) begin
+      if (!(opcode[3:1] == 3'b001 || opcode[2:0] == 3'b111)) begin
         pcsel = 0;
       end else pcsel = 3;
     end else begin
