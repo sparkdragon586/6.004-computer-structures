@@ -34,7 +34,7 @@ module Beta_ALU (
     case (AluFn)
       default: Result = InA + InB;
       4'b0001: Result = InA - InB;
-      4'b0010: Result = InA * InB;
+      //4'b0010: Result = InA * InB;
       4'b0100: Result = cmpeq;
       4'b0101: Result = cmplt;
       4'b0110: Result = cmpeq || cmplt;
