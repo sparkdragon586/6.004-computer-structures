@@ -1,0 +1,15 @@
+read_verilog -sv src/Base_cache.v
+read_verilog -sv src/Beta_ALU_stage.v
+read_verilog -sv src/Beta_ALU.v
+read_verilog -sv src/Beta_bypass.v
+read_verilog -sv src/Beta_core.v
+read_verilog -sv src/Beta_IF.v
+read_verilog -sv src/Beta_MEM.v
+read_verilog -sv src/Beta_RF.v
+read_verilog -sv src/Beta.v
+read_verilog -sv src/Beta_WB.v
+read_verilog -sv src/register_file.v
+read_verilog -sv src/sim.v
+read_verilog -sv src/top.v
+synth_ecp5 -top top
+show

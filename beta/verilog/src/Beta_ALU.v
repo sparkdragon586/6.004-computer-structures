@@ -65,7 +65,7 @@ module Beta_ALU (
         endcase
       end
     end
-    Result = (AluFn[`FINAL] & !AluFn[`ADVANCED] & !(AluFn == 4'b0010)) ? ~intermediate : intermediate;
+    Result = (AluFn[`FINAL] && !AluFn[`ADVANCED] && !(AluFn == 4'b0010)) ? ~intermediate : intermediate;
   end
 
 
