@@ -15,13 +15,21 @@ module Beta_WB (
     output WERF
 );
 
-  reg  [31:0] pc;
-  reg  [31:0] ir;
-  reg  [31:0] y;
+  reg  [31:0] pc = 0;
+  reg  [31:0] ir = `NOP;
+  reg  [31:0] y = 0;
   wire [ 1:0] WDSEL;
 
-  assign WERF = !(irsrc[31:26] == 6'b011001) && !memwait;
+  assign WERF = (!(ir[31:26] == 6'b011001) && !memwait);
   assign wa   = ir[25:21];
+
+  always_comb begin
+    case (WDSEL)
+      default: wd = pc;
+      1: wd = y;
+      2: wd = rd;
+    endcase
+  end
 
   always_comb begin
     if (ir[31]) begin

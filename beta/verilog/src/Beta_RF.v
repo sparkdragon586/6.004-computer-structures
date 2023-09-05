@@ -23,18 +23,22 @@ module Beta_RF (
     output [31:0] d,
     output [31:0] jt,
     output [1:0] pcsel,
-    output [6:0] bypassAddr
+    output [6:0] bypassAddr,
+    output halt
 );
-  reg [31:0] pc;
-  reg [31:0] ir;
+  reg [31:0] pc = 0;
+  reg [31:0] ir = `NOP;
   wire [31:0] sxtConstant;
   wire ra2sel;
   wire asel;
   wire bsel;
   wire ra1Disable;
   wire ra2Disable;
+  wire z;
+  wire [5:0] opcode;
 
-  assign sxtConstant = $signed(InstructionData[15:0]);
+  assign opcode = ir[31:26];
+  assign sxtConstant = $signed(ir[15:0]);
   assign cRelativeA = pc + (sxtConstant << 2);
   assign ra2sel = (ir[31:26] == 6'b011001);
   assign asel = (ir[31:26] == 6'b011111);
@@ -74,6 +78,7 @@ module Beta_RF (
 
   assign pcout = pc;
   assign irout = ir;
+  assign halt  = !|ir;
 
   always_comb begin
     if (opcode[5]) begin

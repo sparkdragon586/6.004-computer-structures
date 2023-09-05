@@ -20,12 +20,14 @@ module Beta_core (
     input rst
 );
   //start
+  reg halt = 0;
+  wire halts;
   reg [31:0] memWaitAddr;
   reg [6:0] accessPipeline[3];
-  wire interruptEnable;
+  wire interruptEnable = 1;
   wire [2:0] bypassControl[2];
   wire [1:0] irsrc[4];
-  wire irsrcCtrl[4];
+  wire irsrcCtrl[3];
   wire [31:0] pcPipe[5];
   wire [31:0] irPipe[5];
   wire [31:0] rd1Bypass;
@@ -37,10 +39,29 @@ module Beta_core (
   wire [31:0] a;
   wire [31:0] b;
   wire [31:0] yPipe[2];
+  wire [31:0] dPipe[2];
   wire [2:0] PCSEL;
   wire [2:0] pcselRF;
   wire ALUException = 0;
   wire mwr;
+  wire stall1;
+  wire stall2;
+  wire stall;
+  wire interrupt;
+  wire [4:0] wa;
+  wire [31:0] wd;
+  wire [4:0] ra1;
+  wire [4:0] ra2;
+  wire [31:0] rd1;
+  wire [31:0] rd2;
+  wire werf;
+  wire register_rst = rst;
+  wire [31:0] cRelativeA;
+  wire [31:0] jt;
+
+  initial accessPipeline[0] = 7'b1111111;
+  initial accessPipeline[1] = 7'b1111111;
+  initial accessPipeline[2] = 7'b1111111;
 
   always @(posedge clk) begin
     case (irsrc[1])
@@ -60,35 +81,60 @@ module Beta_core (
     endcase
   end
 
-  always_comb begin
+  always @(posedge clk) begin
+    halt <= halt || halts;
+  end
+  assign stall = (stall1 || stall2 || !instructionReady || halt);
+  assign interrupt = irq && interruptEnable;
+  assign ALUbypass = accessPipeline[0][6] ? pcPipe[2] : yPipe[0];
+  assign MEMbypass = accessPipeline[1][6] ? pcPipe[3] : yPipe[1];
+  assign WBbypass = wd;
 
+  always_comb begin
+    if (interrupt) begin
+      PCSEL = 4;
+    end else begin
+      case ({
+        dataReady, (pcselRF != 0)
+      })
+        default: PCSEL = 3'h0;
+        0: PCSEL = 5;
+        1: PCSEL = 5;
+        3: PCSEL = pcselRF;
+      endcase
+    end
+    if (iMemfault) begin
+      irsrc[0] = (irsrcCtrl[0] && !interrupt) ? 2'd2 : 2'd1;
+    end else begin
+      irsrc[0] = interrupt ? 2'd1 : (irsrcCtrl[0] ? 2'd2 : 2'd0);
+    end
     if (pcselRF != 0) begin
       irsrcCtrl[0] = 1;
-      irsrc[1] = irsrcCtrl[1] ? 1 : ((pcselRF == 3 || pcselRF == 4) ? 2 : 0);
-      if (dataReady) PCSEL = pcselRF;
+      irsrc[1] = irsrcCtrl[1] ? 2'd2 : ((pcselRF == 3 || pcselRF == 4) ? 2'd1 : 2'd0);
     end else begin
       irsrcCtrl[0] = irsrcCtrl[1];
-      irsrc[1] = (irsrcCtrl[1] || stall) ? 1 : 0;
+      irsrc[1] = (irsrcCtrl[1] || stall) ? 2'd2 : 2'd0;
     end
     if (ALUException) begin
       irsrcCtrl[1] = 1;
-      irsrc[2] = irsrcCtrl[2] ? 1 : 2;
+      irsrc[2] = irsrcCtrl[2] ? 2'd2 : 2'd1;
     end else begin
       irsrcCtrl[1] = irsrcCtrl[2];
-      irsrc[2] = irsrcCtrl[2] ? 1 : 0;
+      irsrc[2] = irsrcCtrl[2] ? 2'd2 : 2'd0;
     end
     if (dataReady) begin
       if (dMemfault) begin
         irsrcCtrl[2] = 1;
-        irsrc[3] = irsrcCtrl[3] ? 1 : 2;
+        irsrc[3] = irsrcCtrl[3] ? 2'd2 : 2'd1;
       end else begin
-        irsrcCtrl[2] = irsrcCtrl[3];
-        irsrc[3] = irsrcCtrl[3] ? 1 : 0;
+        irsrcCtrl[2] = 0;
+        irsrc[3] = 2'd0;
       end
+      WriteEnable = mwr;
     end else begin
       WriteEnable = 0;
-      irsrcCtrl[3] = 1;
-      PCSEL = 5;
+      irsrc[3] = 2'd2;
+      irsrcCtrl[2] = 1;
     end
   end
 
@@ -136,7 +182,7 @@ module Beta_core (
       .cRelativeA(cRelativeA),
       .jt(jt),
       .PCSEL(PCSEL),
-      .pcout(pcPipe[0]),
+      .pcOut(pcPipe[0]),
       .iAddress(InstructionAddress),
       .iData(InstructionData),
       .irout(irPipe[0]),
@@ -144,6 +190,7 @@ module Beta_core (
   );
   Beta_RF RF (
       .clk(clk),
+      .halt(halts),
       .stall(stall),
       .irsrc(irsrc[0]),
       .pcin(pcPipe[0]),
@@ -184,22 +231,23 @@ module Beta_core (
       .din(dPipe[1]),
       .wd(DataWrite),
       .addr(DataAddress),
-      .mwr(ReadEnable),
+      .mwr(mwr),
+      .moe(ReadEnable),
       .pcout(pcPipe[3]),
       .irout(irPipe[3]),
       .yout(yPipe[1])
   );
   Beta_WB WB (
       .clk(clk),
-      .irsrc(irPipe[3]),
+      .irsrc(irsrc[3]),
       .pcin(pcPipe[3]),
       .irin(irPipe[3]),
       .yin(yPipe[1]),
       .rd(DataRead),
-      .memwait(dataReady),
-      .wa(WriteAddress),
-      .wd(WritePort),
-      .WERF(WriteEnable)
+      .memwait(!dataReady),
+      .wa(wa),
+      .wd(wd),
+      .WERF(werf)
   );
 
 endmodule

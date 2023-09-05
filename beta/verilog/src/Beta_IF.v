@@ -20,7 +20,7 @@ module Beta_IF (
     output [31:0] irout
 );
 
-  reg  [31:0] pc;
+  reg  [31:0] pc = 0;
   wire [31:0] pcNext;
 
   assign iAddress = pc;

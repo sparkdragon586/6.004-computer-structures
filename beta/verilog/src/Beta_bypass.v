@@ -26,10 +26,10 @@ module Beta_bypass (
   assign aEq1   = RFAin == aP1[4:0];
   assign aEq2   = RFAin == aP2[4:0];
 
-  assign ready0 = (aP0[6] || aP0[5]) && aEq0;
-  assign ready1 = (aP1[6] || aP1[5]) && aEq1;
+  assign ready0 = !(aP0[6] || aP0[5]) && aEq0;
+  assign ready1 = !(aP1[6] || aP1[5]) && aEq1;
 
-  assign stall  = ready0 || ready1;
+  assign stall  = (ready0 || ready1) && (RFAin != 31);
 
   always_comb begin
     case (aEq1)
@@ -41,7 +41,7 @@ module Beta_bypass (
       0: intermediate2 = intermediate1;
     endcase
     case (aEq0 || aEq1 || aEq2)
-      1: Dout = intermediate2;
+      1: Dout = (RFAin != 31) ? intermediate2 : RFDin;
       default: Dout = RFDin;
     endcase
   end

@@ -65,7 +65,7 @@ dfu: $(PROJ).dfu
 
 # Run nextpnr-ecp5 to place the logic components and route the nets to pins.
 %_out.config: %.json
-	nextpnr-ecp5 --json $< --textcfg $@ --85k --package CSFBGA285 --lpf orangecrab-85f.lpf
+	nextpnr-ecp5 --json $< --textcfg $@ --85k --package CSFBGA285 --lpf orangecrab-85f.lpf --lpf-allow-unconstrained
 
 # Generate the final bitstream from the pnr output.
 %.bit: %_out.config

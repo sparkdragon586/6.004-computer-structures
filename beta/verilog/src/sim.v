@@ -18,7 +18,7 @@ module sim (
   wire [31:0] InstructionAddress;
   wire [31:0] InstructionData;
   wire [31:0] DataAddress;
-  wire [31:0] DataRead;
+  reg [31:0] DataRead;
   wire [31:0] DataWrite;
   wire WriteEnable;
   wire ReadEnable;
@@ -40,8 +40,8 @@ module sim (
     $readmemh("instructions.hex", mainmem);
   end
   assign InstructionData = mainmem[(InstructionAddress>>2)];
-  assign DataRead = ReadEnable ? mainmem[(DataAddress>>2)] : 0;
   always @(posedge clk) begin
     if (WriteEnable) mainmem[(DataAddress>>2)] <= DataWrite;
+    if (ReadEnable) DataRead <= mainmem[(DataAddress>>2)];
   end
 endmodule

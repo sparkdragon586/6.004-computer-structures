@@ -21,15 +21,24 @@ module Beta_ALU_stage (
     output [31:0] dout
 );
 
-  reg [31:0] a;
-  reg [31:0] b;
-  reg [31:0] d;
-  reg [31:0] pc;
-  reg [31:0] ir;
+  reg  [31:0] a = 0;
+  reg  [31:0] b = 0;
+  reg  [31:0] d = 0;
+  reg  [31:0] pc = 0;
+  reg  [31:0] ir = `NOP;
+  wire [ 3:0] AluFn;
+
+  always_comb begin
+    if (ir[31:30] == 2'b01) begin
+      AluFn = {(ir[28:26] == 3'b111), 3'b000};
+    end else begin
+      AluFn = ir[29:26];
+    end
+  end
 
   Beta_ALU ALU (
       .clk(clk),
-      .AluFn(ir[29:26]),
+      .AluFn(AluFn),
       .InA(a),
       .InB(b),
       .Result(yout)

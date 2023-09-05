@@ -18,10 +18,10 @@ module Beta_MEM (
     output [31:0] yout
 );
 
-  reg [31:0] pc;
-  reg [31:0] ir;
-  reg [31:0] y;
-  reg [31:0] d;
+  reg [31:0] pc = 0;
+  reg [31:0] ir = `NOP;
+  reg [31:0] y = 0;
+  reg [31:0] d = 0;
 
   assign addr = y;
   assign yout = y;
