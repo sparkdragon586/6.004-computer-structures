@@ -12,6 +12,7 @@ module Beta (
     input irq,
     input rst
 );
+  Beta_MMU MMU ();
   Beta_core mainCpu (
       .clk(clk),
       .InstructionAddress(InstructionAddress),
