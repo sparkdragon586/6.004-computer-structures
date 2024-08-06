@@ -9,7 +9,7 @@ SIMULATION_CYCLES=48000
 DO_SIMULATION=yes
 
 # By default, we will read all verilog files (.v) in this directory.
-VERILOG_FILES=$(wildcard src/*.v)
+VERILOG_FILES=$(wildcard src/*.sv)
 
 RM         = rm -rf
 COPY       = cp -a
