@@ -20,6 +20,8 @@ module Beta_core (
     input rst
 );
   //start
+
+  // interconnect signals
   reg halt = 0;
   wire halts;
   reg [31:0] memWaitAddr;
@@ -59,11 +61,12 @@ module Beta_core (
   wire [31:0] cRelativeA;
   wire [31:0] jt;
 
+  // initialize access pipeline for RF bypass to hardwired register
   initial accessPipeline[0] = 7'b1111111;
   initial accessPipeline[1] = 7'b1111111;
   initial accessPipeline[2] = 7'b1111111;
 
-  always @(posedge clk) begin
+  always @(posedge clk) begin  // correct access pipeline for exceptions
     case (irsrc[1])
       default: accessPipeline[0] <= bypassAddr;
       1: accessPipeline[0] <= 6'b101110;
@@ -81,17 +84,18 @@ module Beta_core (
     endcase
   end
 
-  always @(posedge clk) begin
+  always @(posedge clk) begin  // Carry halt through and enable halt if it is raised
     halt <= halt || halts;
   end
-  assign stall = (stall1 || stall2 || !instructionReady || halt);
-  assign interrupt = irq && interruptEnable;
-  assign ALUbypass = accessPipeline[0][6] ? pcPipe[2] : yPipe[0];
+
+  assign stall = (stall1 || stall2 || !instructionReady || halt); // Stall if either register stalls, the instruction is not ready or halt is raised
+  assign interrupt = irq && interruptEnable; // cause interrupt if an irq is raised and interrupts are enabled
+  assign ALUbypass = accessPipeline[0][6] ? pcPipe[2] : yPipe[0]; // determine whether bypasses come from results or PC
   assign MEMbypass = accessPipeline[1][6] ? pcPipe[3] : yPipe[1];
   assign WBbypass = wd;
 
   always_comb begin
-    if (interrupt) begin
+    if (interrupt) begin  // if interrupt is raised jump to interrupt handeler
       PCSEL = 4;
     end else begin
       case ({
@@ -103,9 +107,10 @@ module Beta_core (
         3: PCSEL = pcselRF;
       endcase
     end
-    if (iMemfault) begin
+
+    if (iMemfault) begin  // currently unused
       irsrc[0] = (irsrcCtrl[0] && !interrupt) ? 2'd2 : 2'd1;
-    end else begin
+    end else begin  // IRSRC logic
       irsrc[0] = interrupt ? 2'd1 : (irsrcCtrl[0] ? 2'd2 : 2'd0);
     end
     if (pcselRF != 0) begin
@@ -138,6 +143,7 @@ module Beta_core (
     end
   end
 
+  // instantiate pipeline and connect it
   Beta_bypass bypass1 (
       .RFAin(ra1),
       .RFDin(rd1),

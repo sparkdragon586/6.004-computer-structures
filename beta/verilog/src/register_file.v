@@ -1,8 +1,5 @@
 `default_nettype none
 
-/*
- *  Blink a LED on the OrangeCrab using verilog
- */
 
 module register_file (
     input clk,
@@ -15,7 +12,7 @@ module register_file (
     output [31:0] ReadPort1,
     output [31:0] ReadPort2
 );
-  // Create 32 32 bt registers
+  // Create 32 32 bit registers
   reg [31:0] registers[31];
   integer i;
   // Every positive edge assign WritePort to WriteAddress if WriteEnable is

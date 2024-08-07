@@ -20,7 +20,8 @@ module Beta_IF (
     output [31:0] irout
 );
 
-  reg  [31:0] pc = 0;
+  // basic signals
+  reg  [31:0] pc = 0;  // initialize PC to zero
   wire [31:0] pcNext;
 
   assign iAddress = pc;
@@ -28,6 +29,7 @@ module Beta_IF (
   assign pcOut = pcNext;
   assign irout = iData;
 
+  // logic for next PC
   always @(posedge clk) begin
     if (stall) begin
       pc <= pc;

@@ -1,4 +1,5 @@
 `default_nettype none
+// instruction shorthands
 `define NOP 32'b10000011111111111111111111111111
 `define BNE 32'b01111011110111111111111111111111
 
@@ -15,15 +16,16 @@ module Beta_WB (
     output WERF
 );
 
+  // basic signals
   reg  [31:0] pc = 0;
   reg  [31:0] ir = `NOP;
   reg  [31:0] y = 0;
   wire [ 1:0] WDSEL;
 
-  assign WERF = (!(ir[31:26] == 6'b011001) && !memwait);
-  assign wa   = ir[25:21];
+  assign WERF = (!(ir[31:26] == 6'b011001) && !memwait); // whether register file should be written to
+  assign wa = ir[25:21];  // write address
 
-  always_comb begin
+  always_comb begin  // what data should be written to register file
     case (WDSEL)
       default: wd = pc;
       1: wd = y;
@@ -31,7 +33,7 @@ module Beta_WB (
     endcase
   end
 
-  always_comb begin
+  always_comb begin  // what data should be writtenm to register file
     if (ir[31]) begin
       WDSEL = 1;
     end else begin
@@ -44,8 +46,8 @@ module Beta_WB (
   end
 
   always @(posedge clk) begin
-    if (!memwait) begin
-      pc <= pcin;
+    if (!memwait) begin  // memwait logic (currently unused)
+      pc <= pcin;  // pipeline logic
       y  <= yin;
       case (irsrc)
         0: ir <= irin;

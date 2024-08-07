@@ -36,9 +36,10 @@ module sim (
       .irq(irq),
       .rst(rst)
   );
-  initial begin
+  initial begin  // load main memory with program initialy
     $readmemh("instructions.hex", mainmem);
   end
+  // allow main memory access
   assign InstructionData = mainmem[(InstructionAddress>>2)];
   always @(posedge clk) begin
     if (WriteEnable) mainmem[(DataAddress>>2)] <= DataWrite;

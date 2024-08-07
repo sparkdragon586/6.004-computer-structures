@@ -1,4 +1,5 @@
 `default_nettype none
+// short hand operations
 `define NOP 32'b10000011111111111111111111111111
 `define BNE 32'b01111011110111111111111111111111
 
@@ -18,24 +19,25 @@ module Beta_MEM (
     output [31:0] yout
 );
 
-  reg [31:0] pc = 0;
-  reg [31:0] ir = `NOP;
+  // basic signals
+  reg [31:0] pc = 0;  // initialize PC to zero
+  reg [31:0] ir = `NOP;  // initialize IR to zero
   reg [31:0] y = 0;
   reg [31:0] d = 0;
 
-  assign addr = y;
-  assign yout = y;
-  assign pcout = pc;
+  assign addr = y;  // used for relative addressing
+  assign yout = y;  // used to store result to RF
+  assign pcout = pc;  // pipeline signals
   assign irout = ir;
-  assign wd = d;
-  assign mwr = (ir[31:26] == 5'b011001);
-  assign moe = ((ir[31:26] == 5'b011000) | (ir[31:26] == 5'b011111));
+  assign wd = d;  // data to write
+  assign mwr = (ir[31:26] == 5'b011001);  // Write enable
+  assign moe = ((ir[31:26] == 5'b011000) | (ir[31:26] == 5'b011111));  // Read enable
 
   always @(posedge clk) begin
-    pc <= pcin;
+    pc <= pcin;  // pipeline registers
     y  <= yin;
     d  <= din;
-    case (irsrc)
+    case (irsrc)  // IR control
       0: ir <= irin;
       1: ir <= `BNE;
       default: ir <= `NOP;

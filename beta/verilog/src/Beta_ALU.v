@@ -12,24 +12,25 @@ module Beta_ALU (
     input [31:0] InB,
     output [31:0] Result
 );
+  // Unused Currently. Used to be used by Complex ALU but was slower
+  // `define LOGIC 3
+  // `define ADVANCED 2
+  // `define SWITCH 1
+  // `define FINAL 0
 
-  `define LOGIC 3
-  `define ADVANCED 2
-  `define SWITCH 1
-  `define FINAL 0
+  // Unused Currently. Used to be used by Complex ALU but was slower
+  // wire [31:0] Aintermediate;
+  // wire [31:0] Bintermediate;
+  // wire [31:0] intermediate;
 
-  // Create a 27 bit register
-  wire [31:0] Aintermediate;
-  wire [31:0] Bintermediate;
-  wire [31:0] intermediate;
+  // Intermediates for equality and less than
   wire cmpeq;
   wire cmplt;
-
   assign cmpeq = InA == InB;
   assign cmplt = InA < InB;
 
-  // Every positive edge increment register by 1
 
+  // MUX / ROM based ALU
   always_comb begin
     case (AluFn)
       default: Result = InA + InB;
@@ -48,6 +49,7 @@ module Beta_ALU (
     endcase
   end
 
+  // Complex ALU. Slower than ROM ALU
   /*
   always_comb begin
     if (AluFn[2:0] == 1) begin
@@ -88,8 +90,5 @@ module Beta_ALU (
     end
     Result = (AluFn[`FINAL] && !AluFn[`ADVANCED] && !(AluFn == 4'b0010)) ? ~intermediate : intermediate;
   end */
-
-
-
 
 endmodule

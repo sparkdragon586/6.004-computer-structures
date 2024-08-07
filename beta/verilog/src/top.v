@@ -1,5 +1,7 @@
 `default_nettype none
 
+// instantiate cpu and connect to basic signals. currently does not do
+// anything
 
 module top (
     input clk,

@@ -1,5 +1,5 @@
 `default_nettype none
-
+// UNUSED
 
 module Beta_MMU (
     input clk,

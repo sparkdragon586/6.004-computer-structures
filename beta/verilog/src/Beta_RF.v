@@ -1,7 +1,9 @@
 `default_nettype none
+// Interrupt Vectors
 `define RESET 32'h0
 `define ILLOP 32'h4
 `define XADR 32'h8
+// Instruction shorthands
 `define NOP 32'b10000011111111111111111111111111
 `define BNE 32'b01111011110111111111111111111111
 
@@ -26,6 +28,7 @@ module Beta_RF (
     output [6:0] bypassAddr,
     output halt
 );
+  // basic signals
   reg [31:0] pc = 0;
   reg [31:0] ir = `NOP;
   wire [31:0] sxtConstant;
@@ -37,38 +40,38 @@ module Beta_RF (
   wire z;
   wire [5:0] opcode;
 
-  assign opcode = ir[31:26];
-  assign sxtConstant = $signed(ir[15:0]);
-  assign cRelativeA = pc + (sxtConstant << 2);
-  assign ra2sel = (ir[31:26] == 6'b011001);
-  assign asel = (ir[31:26] == 6'b011111);
-  assign bsel = !(ir[31:30] == 2'b10);
+  assign opcode = ir[31:26];  // isolate opcode from instruction
+  assign sxtConstant = $signed(ir[15:0]);  // Sign extend constant from instruction
+  assign cRelativeA = pc + (sxtConstant << 2); // calculate relative address from sign extended constant
+  assign ra2sel = (ir[31:26] == 6'b011001);  // determine where ra2 index comes from
+  assign asel = (ir[31:26] == 6'b011111);  // determine whether a is being used
+  assign bsel = !(ir[31:30] == 2'b10);  // determine whether b is being used
 
-  assign ra1Disable = asel;
-  assign ra2Disable = bsel && !(ra2sel);
+  assign ra1Disable = asel;  // disable ra1 if a is not being used
+  assign ra2Disable = bsel && !(ra2sel);  // disable ra2 if b is not being used
 
-  assign ra1 = ra1Disable ? 5'b11111 : ir[20:16];
-  assign ra2 = ra2Disable ? 5'b11111 : (ra2sel ? ir[25:21] : ir[15:11]);
+  assign ra1 = ra1Disable ? 5'b11111 : ir[20:16];  // output first register address if enabled.
+  assign ra2 = ra2Disable ? 5'b11111 : (ra2sel ? ir[25:21] : ir[15:11]); // output register 2 address if enabled
 
-  assign a = asel ? cRelativeA : rd1;
-  assign b = bsel ? sxtConstant : rd2;
+  assign a = asel ? cRelativeA : rd1;  // determine whether a is rd1 or Relative address
+  assign b = bsel ? sxtConstant : rd2;  // determine whether b is rd2 or sign extended constant
 
-  assign jt = rd1;
-  assign d = rd2;
-  assign z = !(|rd1);
+  assign jt = rd1;  // rd1 is jump target
+  assign d = rd2;  // rd2 is write data
+  assign z = !(|rd1);  // check if rd1 is zero for branch
   assign bypassAddr = {
     (ir[31:26] == 6'b011011 || ir[31:26] == 6'b011101 || ir[31:26] == 6'b011110),
     ir[31],
     (ir[31:26] == 6'b011001) ? 5'b11111 : ir[25:21]
-  };
+  };  // Register that will be written to for bypass logic
 
   always @(posedge clk) begin
-    if (stall) begin
+    if (stall) begin  // stall logic
       pc <= pc;
       ir <= ir;
-    end else begin
+    end else begin  // pipeline logic
       pc <= pcin;
-      case (irsrc)
+      case (irsrc)  // IRsrc logic
         0: ir <= irin;
         1: ir <= `BNE;
         default: ir <= `NOP;
@@ -76,11 +79,11 @@ module Beta_RF (
     end
   end
 
-  assign pcout = pc;
+  assign pcout = pc;  // pipeline stuff
   assign irout = ir;
-  assign halt  = !|ir;
+  assign halt  = !|ir;  // halt if instruction is 0
 
-  always_comb begin
+  always_comb begin  // determine pcsel based on opcode
     if (opcode[5]) begin
       if (!(opcode[3:1] == 3'b001 || opcode[2:0] == 3'b111)) begin
         pcsel = 0;

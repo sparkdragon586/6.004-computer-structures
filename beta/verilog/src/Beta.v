@@ -12,7 +12,9 @@ module Beta (
     input irq,
     input rst
 );
+  // initialize mmu
   Beta_MMU MMU ();
+  // initialize Cpu and connect to signals
   Beta_core mainCpu (
       .clk(clk),
       .InstructionAddress(InstructionAddress),
