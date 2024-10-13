@@ -1,6 +1,6 @@
 `default_nettype none
 
-module Cam_Basic_2Way (
+module beta_TLB (
     input clk,
     input rst,
     input invalidate,
@@ -9,8 +9,10 @@ module Cam_Basic_2Way (
     input [32] write_data,
     input [19] port_1_lookup,
     output [32] port_1_result,
+    output port_1_match,
     input [19] port_2_lookup,
-    output [33] port_2_result
+    output [33] port_2_result,
+    output port_2_match
 );
 
   // create 2 sets for cache
@@ -57,6 +59,32 @@ module Cam_Basic_2Way (
       Set1_Indexed[1] = Set1[port_2_lookup[10:0]];
       Set2_Indexed[1] = Set2[port_2_lookup[10:0]];
     end
+
+    // check for matches
+    // port 1
+    Cache_Hit[0][0] = (port_1_lookup[18:11] == Set1_Indexed[0][33:26]) && Set1_Indexed[0][25];
+    Cache_Hit[0][1] = (port_1_lookup[18:11] == Set2_Indexed[0][33:26]) && Set2_Indexed[0][25];
+    // port 2
+    Cache_Hit[1][0] = (port_2_lookup[18:11] == Set1_Indexed[1][33:26]) && Set1_Indexed[1][25];
+    Cache_Hit[1][1] = (port_2_lookup[18:11] == Set2_Indexed[1][33:26]) && Set2_Indexed[1][25];
+
+    // output
+    port_1_match = |Cache_Hit[0];
+    port_2_match = |Cache_Hit[1];
+
+    // set1 takes priority
+    if (Cache_Hit[0][0]) begin
+      port_1_result = Set1_Indexed[0][31:0];
+    end else begin
+      port_1_result = Set2_Indexed[0][31:0];
+    end
+
+    if (Cache_Hit[1][0]) begin
+      port_2_result = Set1_Indexed[1][31:0];
+    end else begin
+      port_2_result = Set2_Indexed[1][31:0];
+    end
+
   end
 
 endmodule
